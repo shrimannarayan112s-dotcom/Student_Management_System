@@ -4,7 +4,7 @@ import adminImage from "./assets/admin-dashboard.svg";
 import facultyImage from "./assets/faculty-portal.svg";
 import studentImage from "./assets/student-portal.svg";
 
-const API_URL = import.meta.env.VITE_API_URL || "${API_URL}";
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 function BulkPastePanel({ title, endpoint, username, columns, onComplete }) {
   const [value, setValue] = useState("");
