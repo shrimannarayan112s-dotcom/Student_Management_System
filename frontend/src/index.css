@@ -1,0 +1,98 @@
+:root {
+    font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    color: #0f172a;
+    background: #f4f7ff;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color-scheme: light;
+    --bg: #f4f7ff;
+    --panel: #ffffff;
+    --panel-soft: #f8fbff;
+    --surface: #eef4ff;
+    --border: #dfe9ff;
+    --muted: #5f6f8e;
+    --text: #0f172a;
+    --primary: #4f46e5;
+    --primary-strong: #312e81;
+    --primary-soft: rgba(79, 70, 229, 0.12);
+    --accent: #0ea5e9;
+    --accent-soft: rgba(14, 165, 233, 0.12);
+    --success: #10b981;
+    --success-soft: rgba(16, 185, 129, 0.12);
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --shadow: 0 22px 55px rgba(15, 23, 42, 0.12);
+    --shadow-soft: 0 12px 28px rgba(79, 70, 229, 0.10);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background: radial-gradient(circle at top left, rgba(79, 70, 229, 0.14), transparent 28%), radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.12), transparent 26%), linear-gradient(180deg, #edf4ff 0%, #f5f7ff 24%, #f9fbff 100%);
+    color: var(--text);
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 26px 26px;
+    mask-image: radial-gradient(circle at center, black 25%, transparent 90%);
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button {
+    border: none;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+#root {
+    width: 100%;
+    min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+    margin: 0;
+}
+
+input,
+select,
+textarea {
+    color: var(--text);
+    background: #fff;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+}

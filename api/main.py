@@ -1,10 +1,11 @@
+import os
+
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from services.admin_service import (
     authenticate_admin,
-    change_admin_password_api,
     get_admins_api,
     create_admin_api,
     update_admin_status_api,
@@ -12,19 +13,7 @@ from services.admin_service import (
     has_admin_role
 )
 
-from services.student_service import (
-    view_students,
-    create_student,
-    get_student_by_id,
-    get_students_by_name,
-    update_student_api,
-    delete_student_by_id,
-    delete_student_by_name,
-)
-
-from services.admin_log_service import (
-    view_admin_logs
-)
+from services.admin_log_service import view_admin_logs
 
 from services.faculty_service import (
     get_faculty_api,
@@ -87,6 +76,20 @@ from services.notice_service import (
     get_faculty_notices_api
 )
 
+from services.student_service import (
+    view_students,
+    create_student,
+    get_student_by_id,
+    get_students_by_name,
+    update_student_api,
+    delete_student_by_id,
+    delete_student_by_name,
+)
+
+
+# ==========================================
+# FASTAPI APPLICATION
+# ==========================================
 
 app = FastAPI(
     title="Student Management System API",
@@ -95,11 +98,19 @@ app = FastAPI(
 )
 
 
+# ==========================================
+# CORS
+# ==========================================
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173"
+        origin.strip()
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:5173,http://127.0.0.1:5173",
+        ).split(",")
+        if origin.strip()
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -107,16 +118,22 @@ app.add_middleware(
 )
 
 
-# ==========================
-# MODELS
-# ==========================
+# ==========================================
+# LOGIN MODEL
+# ==========================================
 
 class LoginRequest(BaseModel):
+
     username: str
     password: str
 
 
+# ==========================================
+# ADD STUDENT MODEL
+# ==========================================
+
 class StudentCreate(BaseModel):
+
     username: str
     name: str
     email: str
@@ -124,23 +141,23 @@ class StudentCreate(BaseModel):
     dob: str
     department_id: int
 
+
+# ==========================================
+# UPDATE STUDENT MODEL
+# ==========================================
 
 class StudentUpdate(BaseModel):
+
     username: str
     name: str
     email: str
     gender: str
     dob: str
     department_id: int
-
-
-class ChangePasswordRequest(BaseModel):
-    current_password: str
-    new_password: str
-    confirm_password: str
 
 
 class AdminCreate(BaseModel):
+
     username: str
     password: str
     confirm_password: str
@@ -148,10 +165,12 @@ class AdminCreate(BaseModel):
 
 
 class AdminRoleUpdate(BaseModel):
+
     role: str
 
 
 class FacultyCreate(BaseModel):
+
     name: str
     email: str
     phone: str
@@ -163,6 +182,7 @@ class FacultyCreate(BaseModel):
 
 
 class CourseCreate(BaseModel):
+
     department_id: int
     name: str
     code: str
@@ -170,12 +190,14 @@ class CourseCreate(BaseModel):
 
 
 class SemesterCreate(BaseModel):
+
     course_id: int
     semester_number: int
     name: str
 
 
 class SubjectCreate(BaseModel):
+
     semester_id: int
     name: str
     code: str
@@ -183,22 +205,26 @@ class SubjectCreate(BaseModel):
 
 
 class SectionCreate(BaseModel):
+
     semester_id: int
     name: str
     capacity: int = 60
 
 
 class StudentAccountCreate(BaseModel):
+
     username: str
     password: str
     confirm_password: str
 
 
 class StudentSemesterUpdate(BaseModel):
+
     semester_id: int
 
 
 class AttendanceCreate(BaseModel):
+
     student_id: int
     subject_id: int
     attendance_date: str
@@ -206,6 +232,7 @@ class AttendanceCreate(BaseModel):
 
 
 class MarksCreate(BaseModel):
+
     student_id: int
     subject_id: int
     internal_marks: float
@@ -213,6 +240,7 @@ class MarksCreate(BaseModel):
 
 
 class TimetableCreate(BaseModel):
+
     semester_id: int
     subject_id: int
     day_of_week: str
@@ -222,37 +250,40 @@ class TimetableCreate(BaseModel):
 
 
 class NoticeCreate(BaseModel):
+
     title: str
     content: str
     notice_type: str
 
 
-# ==========================
+# ==========================================
 # HOME
-# ==========================
+# ==========================================
 
 @app.get("/")
 def home():
+
     return {
         "message": "Student Management System API is running",
         "status": "success"
     }
 
 
-# ==========================
-# HEALTH
-# ==========================
+# ==========================================
+# HEALTH CHECK
+# ==========================================
 
 @app.get("/health")
 def health_check():
+
     return {
         "status": "healthy"
     }
 
 
-# ==========================
-# LOGIN
-# ==========================
+# ==========================================
+# ADMIN LOGIN
+# ==========================================
 
 @app.post("/login")
 def login(login_data: LoginRequest):
@@ -280,6 +311,7 @@ def login(login_data: LoginRequest):
             "status": "failed"
         }
 
+
     except Exception as error:
 
         return {
@@ -289,9 +321,38 @@ def login(login_data: LoginRequest):
         }
 
 
-# ==========================
+@app.post("/faculty/login")
+def faculty_login(login_data: LoginRequest):
+
+    faculty = authenticate_faculty(
+        login_data.username,
+        login_data.password
+    )
+
+    if faculty:
+        return {
+            "message": "Faculty login successful",
+            "status": "success",
+            "user_type": "faculty",
+            **faculty
+        }
+
+    return {
+        "message": "Invalid faculty username or password",
+        "status": "failed"
+    }
+
+
+@app.get("/faculty/students")
+def get_faculty_students(
+    username: str = Query(..., description="Faculty username")
+):
+    return get_faculty_students_api(username)
+
+
+# ==========================================
 # ADMIN MANAGEMENT
-# ==========================
+# ==========================================
 
 @app.get("/admin/accounts")
 def get_admin_accounts(
@@ -625,42 +686,9 @@ def get_faculty_notices(
     return get_faculty_notices_api(username)
 
 
-# ==========================
-# CHANGE PASSWORD
-# ==========================
-
-@app.put("/admin/change-password")
-def change_password(
-    data: ChangePasswordRequest,
-    username: str = Query(
-        ...,
-        description="Admin username"
-    )
-):
-
-    try:
-
-        result = change_admin_password_api(
-            username,
-            data.current_password,
-            data.new_password,
-            data.confirm_password
-        )
-
-        return result
-
-    except Exception as error:
-
-        return {
-            "status": "error",
-            "message": "Unable to change password.",
-            "error": str(error)
-        }
-
-
-# ==========================
-# VIEW STUDENTS
-# ==========================
+# ==========================================
+# GET ALL STUDENTS
+# ==========================================
 
 @app.get("/students")
 def get_students(
@@ -696,9 +724,9 @@ def get_students(
         }
 
 
-# ==========================
+# ==========================================
 # SEARCH STUDENTS
-# ==========================
+# ==========================================
 
 def format_student(student):
     return {
@@ -741,9 +769,9 @@ def get_students_by_name_route(student_name: str):
         }
 
 
-# ==========================
+# ==========================================
 # GET STUDENT BY ID
-# ==========================
+# ==========================================
 
 @app.get("/students/{student_id}")
 def get_student(student_id: int):
@@ -774,9 +802,9 @@ def get_student(student_id: int):
         }
 
 
-# ==========================
+# ==========================================
 # ADD STUDENT
-# ==========================
+# ==========================================
 
 @app.post("/students")
 def add_student(student_data: StudentCreate):
@@ -820,9 +848,9 @@ def add_student(student_data: StudentCreate):
         }
 
 
-# ==========================
+# ==========================================
 # UPDATE STUDENT
-# ==========================
+# ==========================================
 
 @app.put("/students/{student_id}")
 def update_student(
@@ -870,9 +898,9 @@ def update_student(
         }
 
 
-# ==========================
+# ==========================================
 # DELETE STUDENT BY ID
-# ==========================
+# ==========================================
 
 @app.delete("/students/{student_id}")
 def delete_student(
@@ -920,9 +948,9 @@ def delete_student(
         }
 
 
-# ==========================
+# ==========================================
 # DELETE STUDENT BY NAME
-# ==========================
+# ==========================================
 
 @app.delete("/students/name/{student_name}")
 def delete_student_name(
@@ -949,6 +977,13 @@ def delete_student_name(
                 **result
             }
 
+        if result.get("message") != "Student(s) deleted successfully":
+
+            return {
+                "status": "failed",
+                **result
+            }
+
         return {
             "status": "success",
             **result
@@ -963,9 +998,9 @@ def delete_student_name(
         }
 
 
-# ==========================
+# ==========================================
 # ADMIN ACTIVITY LOGS
-# ==========================
+# ==========================================
 
 @app.get("/admin/activity-logs")
 def get_activity_logs(
@@ -981,29 +1016,20 @@ def get_activity_logs(
 
         logs = view_admin_logs()
 
-        if not logs:
-
-            return {
-                "status": "success",
-                "message": "No activity logs found",
-                "count": 0,
-                "logs": []
-            }
-
-        formatted_logs = []
-
-        for log in logs:
-
-            formatted_logs.append({
+        formatted_logs = [
+            {
                 "id": log[0],
                 "username": log[1],
                 "action": log[2],
                 "created_at": str(log[3])
-            })
+            }
+            for log in logs
+        ]
 
         return {
             "status": "success",
-            "message": "Activity logs retrieved successfully",
+            "message": "Activity logs retrieved successfully"
+            if formatted_logs else "No activity logs found",
             "count": len(formatted_logs),
             "logs": formatted_logs
         }
@@ -1015,32 +1041,4 @@ def get_activity_logs(
             "message": "Unable to retrieve activity logs",
             "error": str(error)
         }
-
-
-@app.post("/faculty/login")
-def faculty_login(login_data: LoginRequest):
-
-    faculty = authenticate_faculty(
-        login_data.username,
-        login_data.password
-    )
-
-    if faculty:
-        return {
-            "message": "Faculty login successful",
-            "status": "success",
-            "user_type": "faculty",
-            **faculty
-        }
-
-    return {
-        "message": "Invalid faculty username or password",
-        "status": "failed"
-    }
-
-
-@app.get("/faculty/students")
-def get_faculty_students(
-    username: str = Query(..., description="Faculty username")
-):
-    return get_faculty_students_api(username)
+        
